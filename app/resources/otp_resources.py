@@ -70,7 +70,7 @@ class OneTimePasswordResource(ModelResource):
                     user = User.objects.filter(username=username).first()
                     if user:
                         otp_verify = OneTimePassword.objects.filter(user=user, otp=otp,
-                            is_active=True.first()
+                            is_active=True).first()
                         if otp_verify:
                             if otp_verify.otp_types == "NEW":
                                 user.is_active = True
