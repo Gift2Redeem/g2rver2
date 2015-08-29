@@ -21,12 +21,12 @@ from tastypie.http import HttpUnauthorized
 
 from app.utils.balance_check import *
 #from app.forms import *
-from app.models import * 
+from app.models import *
 from datetime import datetime
 
 
 class UserResource(ModelResource):
-        
+
     class Meta:
         queryset = User.objects.all()
         resource_name = 'user'
@@ -60,11 +60,11 @@ class UserResource(ModelResource):
             url(r"^(?P<resource_name>%s)/new_card%s$" %
                 (self._meta.resource_name, trailing_slash()),
                 self.wrap_view('new_card'), name="api_new_card"),
-   
+
 
         ]
 
-    
+
     def add_cards(self, request, **kwargs):
 
         try:
@@ -72,7 +72,7 @@ class UserResource(ModelResource):
                 res = {"result": {"status": "False", "message": "User Not allowed"}}
                 return HttpResponse(simplejson.dumps(res), content_type="application/json")
             if request.method.lower() == 'post':
-                import pdb;pdb.set_trace()
+#                import pdb;pdb.set_trace()
                 # username = request.POST['username']
                 # user_obj = User.objects.filter(username=username).first()
                 name = request.POST["name"]
@@ -91,7 +91,7 @@ class UserResource(ModelResource):
                 #expiration_date = dateutil.parser.parse(request.POST["expiration_date"])
                 expiration_date = exp_date
                 cp = CardProfile()
-                cp.retailer = retailer 
+                cp.retailer = retailer
                 cp.name = name
                 cp.save()
                 if cp:
@@ -129,7 +129,7 @@ class UserResource(ModelResource):
             else:
                 res = {"result": {"status": "False", "message": "User Not allowed"}}
                 return HttpResponse(simplejson.dumps(res), content_type="application/json")
-   
+
         except:
             res = {"result": {"status": "False", "message": "User Not allowed"}}
             return HttpResponse(simplejson.dumps(res), content_type="application/json")
@@ -208,11 +208,11 @@ class UserResource(ModelResource):
                             #card_values['retailer'] = wcard.card.card_profile.retailer.name
                             #card_values['logo'] = wcard.card.card_profile.retailer.logo
                             #card_values['site_url'] = wcard.card.card_profile.retailer.site_url
-                        
+
                             retailers_list.append(retailer_values)
 
                         if cards:
-                            
+
                             for wcard in cards:
                                 card_values = {}
                                 card_values['card_id'] = wcard.card.id
@@ -241,12 +241,12 @@ class UserResource(ModelResource):
 
 
     def change_password(self, request, **kwargs):
-        import pdb;pdb.set_trace()
+#        import pdb;pdb.set_trace()
         try:
             if request.method.lower() == 'post':
                 res = {"result": {"status": "True", "message": "Card Added"}}
-                return HttpResponse(simplejson.dumps(res), content_type="application/json")  
-              
+                return HttpResponse(simplejson.dumps(res), content_type="application/json")
+
             else:
                 res = {"result": {"status": "False", "message": "Method Not allowed"}}
                 return HttpResponse(simplejson.dumps(res), content_type="application/json")
@@ -268,7 +268,7 @@ class UserResource(ModelResource):
                 user_result['last_name'] = request.user.last_name
                 card_list = []
                 if cards:
-                                
+
                     for wcard in cards:
                         card_values = {}
                         card_values['number'] = wcard.card.number
@@ -291,7 +291,7 @@ class UserResource(ModelResource):
             return HttpResponse(simplejson.dumps(res), content_type="application/json")
 
     def new_card(self, request, **kwargs):
-        import pdb;pdb.set_trace()
+#        import pdb;pdb.set_trace()
         try:
             #if not request.user:
             #res = {"result": {"status": "False", "message": "User Not allowed"}}
@@ -316,7 +316,7 @@ class UserResource(ModelResource):
                 #expiration_date = dateutil.parser.parse(request.POST["expiration_date"])
                 expiration_date = exp_date
                 cp = CardProfile()
-                cp.retailer = retailer 
+                cp.retailer = retailer
                 cp.name = name
                 cp.save()
                 if cp:
@@ -354,7 +354,7 @@ class UserResource(ModelResource):
             else:
                 res = {"result": {"status": "False", "message": "User Not allowed"}}
                 return HttpResponse(simplejson.dumps(res), content_type="application/json")
-   
+
         except:
             res = {"result": {"status": "False", "message": "User Not allowed"}}
             return HttpResponse(simplejson.dumps(res), content_type="application/json")
