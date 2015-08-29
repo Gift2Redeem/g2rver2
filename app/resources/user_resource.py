@@ -72,7 +72,7 @@ class UserResource(ModelResource):
                 res = {"result": {"status": "False", "message": "User Not allowed"}}
                 return HttpResponse(simplejson.dumps(res), content_type="application/json")
             if request.method.lower() == 'post':
-#                import pdb;pdb.set_trace()
+
                 # username = request.POST['username']
                 # user_obj = User.objects.filter(username=username).first()
                 name = request.POST["name"]
@@ -241,7 +241,7 @@ class UserResource(ModelResource):
 
 
     def change_password(self, request, **kwargs):
-#        import pdb;pdb.set_trace()
+
         try:
             if request.method.lower() == 'post':
                 res = {"result": {"status": "True", "message": "Card Added"}}
@@ -291,7 +291,6 @@ class UserResource(ModelResource):
             return HttpResponse(simplejson.dumps(res), content_type="application/json")
 
     def new_card(self, request, **kwargs):
-#        import pdb;pdb.set_trace()
         try:
             #if not request.user:
             #res = {"result": {"status": "False", "message": "User Not allowed"}}
