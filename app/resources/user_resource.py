@@ -261,6 +261,10 @@ class UserResource(ModelResource):
                 res = {"result": {"status": "False", "message": "User Not allowed"}}
                 return HttpResponse(simplejson.dumps(res), content_type="application/json")
             else:
+                user = User.objects.filter(username=request.POST["username"]).first()
+
+                request.user = user;
+
                 cards = WalletCard.objects.filter(user=request.user)
                 user_result = {}
                 user_result['username'] = request.user.username
