@@ -279,7 +279,6 @@ class UserResource(ModelResource):
                         card_values['pin'] = wcard.card.pin
                         card_values['profile_name'] = wcard.card.card_profile.name
                         card_values['retailer'] = wcard.card.card_profile.retailer.name
-                        card_values['balance'] = bal.balance
                         card_values['logo'] = wcard.card.card_profile.retailer.logo
                         card_values['site_url'] = wcard.card.card_profile.retailer.site_url
 
