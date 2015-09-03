@@ -275,10 +275,12 @@ class UserResource(ModelResource):
 
                     for wcard in cards:
                         card_values = {}
+                        bal = CardBalance.objects.filter(card = wcard.card)[0]
                         card_values['number'] = wcard.card.number
                         card_values['pin'] = wcard.card.pin
                         card_values['profile_name'] = wcard.card.card_profile.name
                         card_values['retailer'] = wcard.card.card_profile.retailer.name
+                        card_values['balance'] = bal.balance
                         card_values['logo'] = wcard.card.card_profile.retailer.logo
                         card_values['site_url'] = wcard.card.card_profile.retailer.site_url
 
