@@ -215,6 +215,8 @@ class UserResource(ModelResource):
 
                             for wcard in cards:
                                 card_values = {}
+                                bal = CardBalance.objects.filter(card = wcard.card)[0]
+                                card_values['balance'] = bal.balance
                                 card_values['card_id'] = wcard.card.id
                                 card_values['number'] = wcard.card.number
                                 card_values['pin'] = wcard.card.pin
@@ -307,7 +309,7 @@ class UserResource(ModelResource):
                 # user_obj = User.objects.filter(username=username).first()
                 name = request.POST["name"]
                 number = request.POST["number"]
-                retailer_name = request.POST["retailer"]
+                retailer_name = request.POST["retailer"]]
                 user = User.objects.filter(username=request.POST["user"]).first()
                 retailer = Retailer.objects.filter(name=request.POST["retailer"]).first()
                 request.user = user;
