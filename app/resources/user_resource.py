@@ -309,7 +309,7 @@ class UserResource(ModelResource):
                 # user_obj = User.objects.filter(username=username).first()
                 name = request.POST["name"]
                 number = request.POST["number"]
-                retailer_name = request.POST["retailer"]]
+                retailer_name = request.POST["retailer"]
                 user = User.objects.filter(username=request.POST["user"]).first()
                 retailer = Retailer.objects.filter(name=request.POST["retailer"]).first()
                 request.user = user;
