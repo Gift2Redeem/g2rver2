@@ -14,7 +14,7 @@ from tastypie.resources import ModelResource
 from tastypie.serializers import Serializer
 
 from app.models import *
-from app.utils.send_mail import send_email
+#from app.utils.send_mail import send_email
 
 
 class OneTimePasswordResource(ModelResource):
