@@ -12,21 +12,22 @@ from django.contrib.auth.models import User
 from django.http import HttpResponse
 
 from tastypie import fields
-from tastypie.authorization import DjangoAuthorization
 from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
 from tastypie.utils import trailing_slash
 from tastypie.authentication import SessionAuthentication
+from tastypie.authentication import BasicAuthentication, ApiKeyAuthentication, MultiAuthentication
+from tastypie.authorization import DjangoAuthorization
 from tastypie.authorization import Authorization
 from tastypie.http import HttpUnauthorized
 
 from app.utils.balance_check import *
 #from app.forms import *
-from app.models import *
+from app.models import * 
 from datetime import datetime
 
 
 class UserResource(ModelResource):
-
+        
     class Meta:
         queryset = User.objects.all()
         resource_name = 'user'
@@ -35,6 +36,8 @@ class UserResource(ModelResource):
         filtering = { "id" : ALL }
 
         fields = ['username', 'first_name', 'last_name', 'last_login']
+        authentication = MultiAuthentication(BasicAuthentication(), ApiKeyAuthentication())
+        authorization = DjangoAuthorization()
 
     def prepend_urls(self):
         return [
@@ -44,6 +47,9 @@ class UserResource(ModelResource):
             url(r"^(?P<resource_name>%s)/change_password%s$" %
                 (self._meta.resource_name, trailing_slash()),
                 self.wrap_view('change_password'), name="api_change_password"),
+            url(r"^(?P<resource_name>%s)/forgot_password%s$" %
+                (self._meta.resource_name, trailing_slash()),
+                self.wrap_view('forgot_password'), name="api_forgot_password"),
             url(r"^(?P<resource_name>%s)/new%s$" %
                 (self._meta.resource_name, trailing_slash()),
                 self.wrap_view('new_user'), name="api_new_user"),
@@ -60,11 +66,11 @@ class UserResource(ModelResource):
             url(r"^(?P<resource_name>%s)/new_card%s$" %
                 (self._meta.resource_name, trailing_slash()),
                 self.wrap_view('new_card'), name="api_new_card"),
-
+   
 
         ]
 
-
+    
     def add_cards(self, request, **kwargs):
 
         try:
@@ -72,7 +78,7 @@ class UserResource(ModelResource):
                 res = {"result": {"status": "False", "message": "User Not allowed"}}
                 return HttpResponse(simplejson.dumps(res), content_type="application/json")
             if request.method.lower() == 'post':
-
+                #import pdb;pdb.set_trace()
                 # username = request.POST['username']
                 # user_obj = User.objects.filter(username=username).first()
                 name = request.POST["name"]
@@ -91,7 +97,7 @@ class UserResource(ModelResource):
                 #expiration_date = dateutil.parser.parse(request.POST["expiration_date"])
                 expiration_date = exp_date
                 cp = CardProfile()
-                cp.retailer = retailer
+                cp.retailer = retailer 
                 cp.name = name
                 cp.save()
                 if cp:
@@ -129,7 +135,7 @@ class UserResource(ModelResource):
             else:
                 res = {"result": {"status": "False", "message": "User Not allowed"}}
                 return HttpResponse(simplejson.dumps(res), content_type="application/json")
-
+   
         except:
             res = {"result": {"status": "False", "message": "User Not allowed"}}
             return HttpResponse(simplejson.dumps(res), content_type="application/json")
@@ -208,19 +214,19 @@ class UserResource(ModelResource):
                             #card_values['retailer'] = wcard.card.card_profile.retailer.name
                             #card_values['logo'] = wcard.card.card_profile.retailer.logo
                             #card_values['site_url'] = wcard.card.card_profile.retailer.site_url
-
+                        
                             retailers_list.append(retailer_values)
 
                         if cards:
-
+                            
                             for wcard in cards:
                                 card_values = {}
                                 bal = CardBalance.objects.filter(card = wcard.card)[0]
-                                card_values['balance'] = bal.balance
                                 card_values['card_id'] = wcard.card.id
                                 card_values['number'] = wcard.card.number
                                 card_values['pin'] = wcard.card.pin
                                 card_values['profile_name'] = wcard.card.card_profile.name
+                                card_values['balance'] = bal.balance
                                 card_values['retailer'] = wcard.card.card_profile.retailer.name
                                 card_values['logo'] = wcard.card.card_profile.retailer.logo
                                 card_values['site_url'] = wcard.card.card_profile.retailer.site_url
@@ -243,18 +249,74 @@ class UserResource(ModelResource):
 
 
     def change_password(self, request, **kwargs):
-
         try:
             if request.method.lower() == 'post':
-                res = {"result": {"status": "True", "message": "Card Added"}}
-                return HttpResponse(simplejson.dumps(res), content_type="application/json")
+                username = request.POST["username"]
+                #username = request.user.username
+                old_password = request.POST.get("old_password", "")
+                change_type = request.POST.get("change_type", "")
+                new_password = request.POST["new_password"]
+                user_obj = ''
 
+                if old_password:
+                    user_obj = authenticate(username=username, password=old_password)
+                elif change_type == 'FORGOT':
+                    user_obj = User.objects.get(username=username)
+                if user_obj and new_password:
+                    user_obj.set_password(new_password)
+                    user_obj.save()
+
+                    res = {"result": {"status": "True", "message": "Password Changed successfully"}}
+                    return HttpResponse(simplejson.dumps(res), content_type="application/json")
+                else:
+                    res = {"result": {"status": "False", "message": "User Does not exist"}}
+                    return HttpResponse(simplejson.dumps(res), content_type="application/json")
             else:
                 res = {"result": {"status": "False", "message": "Method Not allowed"}}
                 return HttpResponse(simplejson.dumps(res), content_type="application/json")
         except:
             res = {"result": {"status": "False", "message": "Something went Wrong "}}
             return HttpResponse(simplejson.dumps(res), content_type="application/json")
+
+    def forgot_password(self, request, **kwargs):
+        try:
+            # if not request.user:
+            #     res = {"result": {"status": "False", "message": "User Not allowed"}}
+            #     return HttpResponse(simplejson.dumps(res), content_type="application/json")
+            if request.method.lower() == 'post':
+                #import pdb;pdb.set_trace()
+                username = request.POST["username"]
+                if '@' in username:
+                    email = username
+                    user = User.objects.filter(email=email)
+                #         raise CustomBadRequest(
+                #             code="duplicate_exception",
+                #             message="That email is already used.")
+                if username:
+                    user_obj = User.objects.get(username=username)
+                    if user_obj:
+                        opt_random = randint(0,999999)
+                        otp_create, otp_true = OneTimePassword.objects.get_or_create(
+                            user=user_obj, otp=opt_random, otp_types = 'FORGOT')
+                        #up_create, upp_true = UserProfile.objects.get_or_create(user=user_obj)
+                        res = {"result": {"status": "True", "otp_data": otp_create.otp}}
+                        return HttpResponse(simplejson.dumps(res), content_type="application/json")
+                    else:
+                        res = {"result": {"status": "False", "message": "User Does not exist"}}
+                        return HttpResponse(simplejson.dumps(res), content_type="application/json")
+            else:
+                res = {"result": {"status": "False", "message": "Method Not allowed"}}
+                return HttpResponse(simplejson.dumps(res), content_type="application/json")
+        except:
+            res = {"result": {"status": "False", "message": "Something went Wrong "}}
+            return HttpResponse(simplejson.dumps(res), content_type="application/json")
+
+    def logout(self, request, **kwargs):
+        if request.user and request.user.is_authenticated():
+            logout(request)
+            return self.create_response(request, { 'success': True })
+        else:
+            return self.create_response(request, { 'success': False }, HttpUnauthorized)
 
 
     def get_cards(self, request, **kwargs):
@@ -274,7 +336,7 @@ class UserResource(ModelResource):
                 user_result['last_name'] = request.user.last_name
                 card_list = []
                 if cards:
-
+                                
                     for wcard in cards:
                         card_values = {}
                         bal = CardBalance.objects.filter(card = wcard.card)[0]
@@ -323,7 +385,7 @@ class UserResource(ModelResource):
                 #expiration_date = dateutil.parser.parse(request.POST["expiration_date"])
                 expiration_date = exp_date
                 cp = CardProfile()
-                cp.retailer = retailer
+                cp.retailer = retailer 
                 cp.name = name
                 cp.save()
                 if cp:
@@ -361,7 +423,7 @@ class UserResource(ModelResource):
             else:
                 res = {"result": {"status": "False", "message": "User Not allowed"}}
                 return HttpResponse(simplejson.dumps(res), content_type="application/json")
-
+   
         except:
             res = {"result": {"status": "False", "message": "User Not allowed"}}
             return HttpResponse(simplejson.dumps(res), content_type="application/json")

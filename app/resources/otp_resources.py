@@ -13,7 +13,8 @@ from tastypie import fields
 from tastypie.resources import ModelResource
 from tastypie.serializers import Serializer
 
-from app.models import * 
+from app.models import *
+from app.utils.send_mail import send_email
 
 
 class OneTimePasswordResource(ModelResource):
@@ -32,7 +33,6 @@ class OneTimePasswordResource(ModelResource):
 
 
     def otp_request(self, request, **kwargs):
-        #import pdb;pdb.set_trace()
         try:
             if request.method == 'GET':
                 username = request.GET['username']
@@ -42,11 +42,13 @@ class OneTimePasswordResource(ModelResource):
                         otp_verify = OneTimePassword.objects.filter(user=user, is_active=True).first()
                         if not otp_verify:
                             opt_random = randint(0,999999)
-                            otp_create, otp_true = OneTimePassword.objects.get_or_create(user=user, otp=opt_random)
-                            res = {"result": {"status": "True", "opt_data": otp_create.otp}}
-                        else:
+                            otp_verify, otp_true = OneTimePassword.objects.get_or_create(user=user, otp=opt_random)
+                        if otp_verify:
+                            if user.email:
+                                print "test"
+                                #send_email(user.email, "OTP", "your OTP is : "+str(otp_verify.otp))
                             res = {"result": {"status": "True", "opt_data": otp_verify.otp}}
-                        return HttpResponse(simplejson.dumps(res), content_type="application/json")
+                            return HttpResponse(simplejson.dumps(res), content_type="application/json")
                     else:
                         res = {"result": {"status": "False", "message": "User Does not exist "}}
                         return HttpResponse(simplejson.dumps(res), content_type="application/json")
@@ -55,22 +57,22 @@ class OneTimePasswordResource(ModelResource):
                     return HttpResponse(simplejson.dumps(res), content_type="application/json")
             else:
                 res = {"result": {"status": "False", "message": "Method Not allowed"}}
-                return HttpResponse(simplejson.dumps(res), content_type="application/json")  
+                return HttpResponse(simplejson.dumps(res), content_type="application/json")
         except:
             res = {"result": {"status": "False", "message": "Something Went wrong"}}
             return HttpResponse(simplejson.dumps(res), content_type="application/json")
 
     def verify_otp(self, request, **kwargs):
-        #import pdb;pdb.set_trace()
         try:
             if request.method == 'POST':
                 username = request.POST['username']
                 otp = request.POST["otp"]
+                otp_type = request.POST.get('otp_type', 'NEW')
                 if username:
                     user = User.objects.filter(username=username).first()
                     if user:
                         otp_verify = OneTimePassword.objects.filter(user=user, otp=otp,
-                            is_active=True).first()
+                            is_active=True, otp_types = otp_type).first()
                         if otp_verify:
                             if otp_verify.otp_types == "NEW":
                                 user.is_active = True
@@ -85,9 +87,7 @@ class OneTimePasswordResource(ModelResource):
             else:
                 res = {"result": {"status": "False", "message": "Method Not allowed"}}
                 return HttpResponse(simplejson.dumps(res), content_type="application/json")
-            
+
         except:
             res = {"result": {"status": "False", "message": "Something Went wrong"}}
             return HttpResponse(simplejson.dumps(res), content_type="application/json")
-
-
