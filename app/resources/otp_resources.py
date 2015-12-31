@@ -14,7 +14,7 @@ from tastypie.resources import ModelResource
 from tastypie.serializers import Serializer
 
 from app.models import *
-#from app.utils.send_mail import send_email
+from app.utils.send_mail import *
 
 
 class OneTimePasswordResource(ModelResource):
@@ -31,7 +31,6 @@ class OneTimePasswordResource(ModelResource):
             	name="api_verify_otp"),
         ]
 
-
     def otp_request(self, request, **kwargs):
         try:
             if request.method == 'GET':
@@ -39,30 +38,33 @@ class OneTimePasswordResource(ModelResource):
                 if username:
                     user = User.objects.filter(username=username).first()
                     if user:
-                        otp_verify = OneTimePassword.objects.filter(user=user, is_active=True).first()
+                        import pdb;pdb.set_trace()
+                        otp_type = request.GET.get('otp_type', 'NEW')
+                        otp_verify = OneTimePassword.objects.filter(user=user, is_active=True, otp_types = otp_type).first()
                         if not otp_verify:
                             opt_random = randint(0,999999)
-                            otp_verify, otp_true = OneTimePassword.objects.get_or_create(user=user, otp=opt_random)
+                            otp_verify, otp_true = OneTimePassword.objects.get_or_create(user=user, otp=opt_random, otp_types = otp_type)
                         if otp_verify:
+                            user_p = UserProfile.objects.filter(user=user)
                             if user.email:
-                                print "test"
-                                #send_email(user.email, "OTP", "your OTP is : "+str(otp_verify.otp))
+                                send_mail2(user.email, "OTP", "your OTP is : "+str(otp_verify.otp))
+                            if user_p:
+                                if user_p[0].mobile:
+                                    mob = [user_p[0].mobile]
+                                    send_sms(mob, "your OTP is : "+str(otp_verify.otp))
                             res = {"result": {"status": "True", "opt_data": otp_verify.otp}}
-                            return HttpResponse(simplejson.dumps(res), content_type="application/json")
                     else:
                         res = {"result": {"status": "False", "message": "User Does not exist "}}
-                        return HttpResponse(simplejson.dumps(res), content_type="application/json")
                 else:
                     res = {"result": {"status": "False", "message": "Username Not entered"}}
-                    return HttpResponse(simplejson.dumps(res), content_type="application/json")
             else:
                 res = {"result": {"status": "False", "message": "Method Not allowed"}}
-                return HttpResponse(simplejson.dumps(res), content_type="application/json")
         except:
             res = {"result": {"status": "False", "message": "Something Went wrong"}}
-            return HttpResponse(simplejson.dumps(res), content_type="application/json")
+        return HttpResponse(simplejson.dumps(res), content_type="application/json")
 
     def verify_otp(self, request, **kwargs):
+        res = {}
         try:
             if request.method == 'POST':
                 username = request.POST['username']
@@ -80,14 +82,11 @@ class OneTimePasswordResource(ModelResource):
                             otp_verify.is_active=False
                             otp_verify.save()
                             res = {"result": {"status": "True", "message": "Verify otp success"}}
-                            return HttpResponse(simplejson.dumps(res), content_type="application/json")
                         else:
                             res = {"result": {"status": "False", "message": "Otp verification Failed"}}
-                            return HttpResponse(simplejson.dumps(res), content_type="application/json")
             else:
                 res = {"result": {"status": "False", "message": "Method Not allowed"}}
-                return HttpResponse(simplejson.dumps(res), content_type="application/json")
 
         except:
             res = {"result": {"status": "False", "message": "Something Went wrong"}}
-            return HttpResponse(simplejson.dumps(res), content_type="application/json")
+        return HttpResponse(simplejson.dumps(res), content_type="application/json")
