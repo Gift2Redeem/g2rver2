@@ -24,7 +24,7 @@ from tastypie.authorization import Authorization
 from tastypie.http import HttpUnauthorized
 
 from app.utils.balance_check import *
-from app.utils.send_mail import send_sms
+from app.utils.send_mail import send_mail2
 #from app.forms import *
 from app.models import * 
 
@@ -182,6 +182,8 @@ class UserResource(ModelResource):
                                 up_obj.save()
                             except:
                                 pass
+                            if user_obj.email:
+                                send_mail2(user_obj.email, "OTP", "your OTP is : "+str(otp_verify.otp))
                             #up_create, upp_true = UserProfile.objects.get_or_create(user=user_obj)
                         res = {"result": {"status": "True", "otp_data": otp_create.otp}}
                 else:
