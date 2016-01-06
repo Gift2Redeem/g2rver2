@@ -62,10 +62,10 @@ WSGI_APPLICATION = 'gift.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'd9uqip88arqkn2',
-        'USER': 'glrmunbsyhgmrk',
-        'PASSWORD': 'LAPbbgoTqqh4CExwaDd06xo1PE',
-        'HOST': 'ec2-54-83-205-164.compute-1.amazonaws.com'
+        'NAME': 'de94rmc93831fg',
+        'USER': 'eljynyyvsrnizg',
+        'PASSWORD': '9pQM_Z20wr0QvRnD01cYGsJWwK',
+        'HOST': 'ec2-23-23-199-181.compute-1.amazonaws.com'
     }
 }
 
