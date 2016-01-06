@@ -183,7 +183,7 @@ class UserResource(ModelResource):
                             except:
                                 pass
                             if user_obj.email:
-                                send_mail2(user_obj.email, "OTP", "your OTP is : "+str(otp_verify.otp))
+                                send_mail2(user_obj.email, "OTP", "your OTP is : "+str(opt_random.otp))
                             #up_create, upp_true = UserProfile.objects.get_or_create(user=user_obj)
                         res = {"result": {"status": "True", "otp_data": otp_create.otp}}
                 else:
