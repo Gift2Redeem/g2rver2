@@ -8,14 +8,18 @@ OTP_CHOICES = (
     ('OTHER', 'Other'),
 )
 
-class UserProfile(User):
-    google_id = models.CharField('google_id', max_length=200, null=True)
+
+class UserProfile(models.Model):
+    user = models.ForeignKey(User)
+    mobile = models.CharField('mobile', max_length=200, null=True)
+    user_image = models.FileField(upload_to = 'images/', default = 'images/no_image.png', null=True, blank=True)
+    google_id = models.CharField('google_id', unique=True, max_length=200, null=True)
     google_image = models.CharField('google_image', max_length=500, null=True)
-    facebook_id = models.CharField('facebook_id', max_length=200, null=True)
+    facebook_id = models.CharField('facebook_id', unique=True, max_length=200, null=True)
     dob = models.DateField(null=True)
 
     def __unicode__(self):
-         return self.last_name + self.first_name
+         return self.user.last_name + self.user.first_name
 
     def calculate_age(self):
         today = date.today()

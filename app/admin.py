@@ -51,6 +51,13 @@ class WalletCardAdmin(admin.ModelAdmin):
 	search_fields = ['user', 'card',]
 
 
+class UserProfileAdmin(admin.ModelAdmin):
+ list_display  = ('user',)
+ list_filter   = ['user',] 
+ search_fields = ['user',]
+
+
+
 admin.site.register(WalletCard,  WalletCardAdmin)
 admin.site.register(Card,  CardAdmin)
 admin.site.register(CardBalance,  CardBalanceAdmin)
@@ -59,4 +66,4 @@ admin.site.register(Retailer,  RetailerAdmin)
 admin.site.register(CardProfile, CardProfileAdmin)
 admin.site.register(RetailerLocation, RetailerLocationAdmin)
 admin.site.register(OneTimePassword,  OtpAdmin)
-
+admin.site.register(UserProfile,  UserProfileAdmin)

@@ -178,7 +178,7 @@ class UserResource(ModelResource):
                             opt_random = randint(0,999999)
                             otp_create, otp_true = OneTimePassword.objects.get_or_create(user=user_obj, otp=opt_random)
                             try:
-                                up_obj, up = UserProfile.objects.get_or_create(user=user_obj, mobile = mobile)
+                                up_obj, up = UserProfile.objects.get_or_create(user=user_obj)
                                 up_obj.save()
                             except:
                                 pass

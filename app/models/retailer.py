@@ -8,7 +8,9 @@ class Retailer(models.Model):
     logo = models.URLField(max_length=500)
     site_url = models.URLField(max_length=500, blank=True)
     slick_deals_url = models.URLField(null=True, blank=True)
-
+    phone_no = models.CharField(max_length=20, blank=True, null=True)
+    balance_check_url = models.CharField(max_length=200, blank=True, null=True)
+    
     def __unicode__(self):
         return self.name
 
