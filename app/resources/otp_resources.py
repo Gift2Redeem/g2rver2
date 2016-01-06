@@ -38,7 +38,6 @@ class OneTimePasswordResource(ModelResource):
                 if username:
                     user = User.objects.filter(username=username).first()
                     if user:
-                        import pdb;pdb.set_trace()
                         otp_type = request.GET.get('otp_type', 'NEW')
                         otp_verify = OneTimePassword.objects.filter(user=user, is_active=True, otp_types = otp_type).first()
                         if not otp_verify:
