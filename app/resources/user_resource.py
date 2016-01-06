@@ -197,8 +197,7 @@ class UserResource(ModelResource):
     def user_login(self, request, **kwargs):
         try:
             if request.method.lower() == 'post':
-                if request.POST.get('facebook'):
-                    self.fb_login(request)
+
 
                 username = request.POST['username']
                 password = request.POST["password"]
