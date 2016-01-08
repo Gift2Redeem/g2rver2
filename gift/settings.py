@@ -10,7 +10,7 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
-from config import WEB_ROOT
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
@@ -113,13 +113,6 @@ ALLOWED_HOSTS = ['*']
 
 
 
-def init_cors(app):
-    @app.after_request
-    def add_cors_headers(response):
-        response.headers.add('Access-Control-Allow-Origin', WEB_ROOT)
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        return response
 
 
 # OCR Web Service Params
