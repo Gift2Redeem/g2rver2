@@ -1,5 +1,6 @@
 
 from random import randint
+import json
 import simplejson
 from datetime import datetime
 
@@ -80,11 +81,10 @@ class UserResource(ModelResource):
 
     
     def add_cards(self, request, **kwargs):
-
         try:
             if not request.user:
                 res = {"result": {"status": "False", "message": "User Not allowed"}}
-                return HttpResponse(simplejson.dumps(res), content_type="application/json")
+                return HttpResponse(simplejson.dumps(res), content_type="application/json", request=request)
             if request.method.lower() == 'post':
                 #import pdb;pdb.set_trace()
                 # username = request.POST['username']
@@ -148,16 +148,10 @@ class UserResource(ModelResource):
     @csrf_exempt
     def new_user(self, request, **kwargs):
         try:
-            if request.method.lower() == 'post':
-                username = request.POST["username"]
-                #email = request.POST["email"]
-                password = request.POST["password"]
-                # firstName = request.POST["firstName"]
-                # lastName = request.POST["lastName"]
-                # google_id = request.POST["google_id"]
-                # facebook_id = request.POST["facebook_id"]
-                # google_image = request.POST["google_image"]
-                # dob = request.POST["dob"]
+            if request.method.lower() in ['post']:
+                input_data = json.loads(request.body)
+                username = input_data.get('username', "")
+                password = input_data.get("password", "")
                 isactive = False
                 email = ""
                 mobile = ""
@@ -178,7 +172,7 @@ class UserResource(ModelResource):
                             opt_random = randint(0,999999)
                             otp_create, otp_true = OneTimePassword.objects.get_or_create(user=user_obj, otp=opt_random)
                             try:
-                                up_obj, up = UserProfile.objects.get_or_create(user=user_obj)
+                                up_obj, up = UserProfile.objects.get_or_create(user=user_obj, mobile=mobile)
                                 up_obj.save()
                             except:
                                 pass
@@ -193,21 +187,22 @@ class UserResource(ModelResource):
                 res = {"result": {"status": "False", "message": "Method Not allowed"}}
         except:
             res = {"result": {"status": "False", "message": "Something went Wrong "}}
-        return HttpResponse(simplejson.dumps(res), content_type="application/json")
+        return self.create_response(request, res)
 
     #@csrf_exempt
     def user_login(self, request, **kwargs):
         try:
             if request.method.lower() == 'post':
-
-
-                username = request.POST['username']
-                password = request.POST["password"]
+                # if request.POST.get('facebook'):
+                #     self.fb_login(request)
+                input_data = json.loads(request.body)
+                username = input_data.get('username', "")
+                password = input_data.get("password", "")
                 user_check = User.objects.filter(username=username)
                 if user_check:
                     username = user_check[0].username
                 else:
-                    up_obj = UserProfile.objects.filter(mobile = username)
+                    up_obj = UserProfile.objects.filter(mobile=username)
                     if up_obj:
                         username = up_obj[0].user.username
                     else:
@@ -223,6 +218,9 @@ class UserResource(ModelResource):
                         user_result['username'] = user.username
                         user_result['first_name'] = user.first_name
                         user_result['last_name'] = user.last_name
+                        user_pro= UserProfile.objects.filter(user=user)[0]
+                        if user_pro.user_image:
+                            user_result['user_image'] = str(user_pro.user_image.url)
                         res = {"result": {"status": "True", "user": user_result, "message": "Login success"}}
                     else:
                         res = {"result": {"status": "False", "message": "Login Fail"}}
@@ -232,7 +230,7 @@ class UserResource(ModelResource):
                 res = {"result": {"status": "False", "message": "Method Not allowed"}}
         except:
             res = {"result": {"status": "False", "message": "Something went Wrong "}}
-        return HttpResponse(simplejson.dumps(res), content_type="application/json")
+        return self.create_response(request, res)
 
     def fb_login(self, request):
 
@@ -298,6 +296,50 @@ class UserResource(ModelResource):
             res = {"result": {"status": "False", "message": "Something went Wrong "}}
         return HttpResponse(simplejson.dumps(res), content_type="application/json")
 
+    def edit_user(self, request, **kwargs):
+        try:
+            if request.user:
+                user_pro= UserProfile.objects.filter(user=request.user)[0]
+                user_result = {} 
+                user_result['username'] = request.user.username
+                user_result['first_name'] = request.user.first_name
+                user_result['last_name'] = request.user.last_name
+                user_result['email'] = request.user.email
+                user_result['mobile'] = user_pro.mobile
+                res = {"result": {"status": "True", "data": user_result, "message": "success"}}
+            else:
+                res = {"result": {"status": "False", "message": "User does not exist"}}
+   
+        except:
+            res = {"result": {"status": "False", "message": "User Not allowed"}}
+        return self.create_response(request, res)
+
+
+    def update_user(self, request, **kwargs):
+        try:
+            if request.user:
+                input_data = json.loads(request.body)
+                user_pro= UserProfile.objects.filter(user=request.user)[0]
+                if input_data.get('first_name', ''):
+                    request.user.first_name = input_data['first_name']
+                if input_data.get('last_name', ''):
+                    request.user.last_name = input_data['last_name']
+                request.user.save() 
+                #user_pro.save()
+                user_result = {} 
+                user_result['username'] = request.user.username
+                user_result['first_name'] = request.user.first_name
+                user_result['last_name'] = request.user.last_name
+                user_result['email'] = request.user.email
+                user_result['mobile'] = user_pro.mobile
+                res = {"result": {"status": "True", "data": user_result, "message": "success"}}
+            else:
+                res = {"result": {"status": "False", "message": "User does not exist"}}
+   
+        except:
+            res = {"result": {"status": "False", "message": "Not allowed"}}
+        return self.create_response(request, res)
+
     def logout(self, request, **kwargs):
         if request.user and request.user.is_authenticated():
             logout(request)
@@ -307,11 +349,11 @@ class UserResource(ModelResource):
 
 
     def get_cards(self, request, **kwargs):
-        #import pdb;pdb.set_trace()
+        import pdb;pdb.set_trace()
         try:
             if not request.user:
                 res = {"result": {"status": "False", "message": "User must login "}}
-                return HttpResponse(simplejson.dumps(res), content_type="application/json")
+                return self.create_response(request, res)
             else:
                 # user = User.objects.filter(username=request.POST["username"]).first()
 
@@ -340,13 +382,11 @@ class UserResource(ModelResource):
 
                     user_result['cards'] = card_list
                     res = {"result": {"status": "True", "data": user_result, "message": "success"}}
-                    return HttpResponse(simplejson.dumps(res), content_type="application/json")
                 else:
                     res = {"result": {"status": "True", "data": user_result, "message": "No Cards available"}}
-                    return HttpResponse(simplejson.dumps(res), content_type="application/json")
         except:
             res = {"result": {"status": "False", "message": "Something went Wrong "}}
-            return HttpResponse(simplejson.dumps(res), content_type="application/json")
+        return self.create_response(request, res)
 
     def new_card(self, request, **kwargs):
         try:
@@ -416,44 +456,5 @@ class UserResource(ModelResource):
             res = {"result": {"status": "False", "message": "User Not allowed"}}
             return HttpResponse(simplejson.dumps(res), content_type="application/json")
 
-    def edit_user(self, request, **kwargs):
-        #import pdb;pdb.set_trace()
-        try:
-            if request.user:
-                user_pro= UserProfile.objects.filter(user=request.user)[0]
-                user_result = {} 
-                user_result['username'] = request.user.username
-                user_result['first_name'] = request.user.first_name
-                user_result['last_name'] = request.user.last_name
-                user_result['email'] = request.user.email
-                user_result['mobile'] = user_pro.mobile
-                res = {"result": {"status": "True", "data": user_result, "message": "success"}}
+    
 
-            else:
-                res = {"result": {"status": "False", "message": "User does not exist"}}
-   
-        except:
-            res = {"result": {"status": "False", "message": "User Not allowed"}}
-        return HttpResponse(simplejson.dumps(res), content_type="application/json")
-
-
-    def update_user(self, request, **kwargs):
-        #import pdb;pdb.set_trace()
-        try:
-            if request.user:
-                user_pro= UserProfile.objects.filter(user=request.user)[0]
-                user_pro.mobile = request.POST.get('mobile', '')
-                user_pro.save()
-                user_result = {} 
-                user_result['username'] = request.user.username
-                user_result['first_name'] = request.user.first_name
-                user_result['last_name'] = request.user.last_name
-                user_result['email'] = request.user.email
-                user_result['mobile'] = user_pro.mobile
-                res = {"result": {"status": "True", "data": user_result, "message": "success"}}
-            else:
-                res = {"result": {"status": "False", "message": "User does not exist"}}
-   
-        except:
-            res = {"result": {"status": "False", "message": "Not allowed"}}
-        return HttpResponse(simplejson.dumps(res), content_type="application/json")

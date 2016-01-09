@@ -1,5 +1,6 @@
 from decimal import Decimal
 import simplejson
+import json
 from random import randint
 import dateutil.parser
 
@@ -8,10 +9,15 @@ from django.contrib.auth.models import User
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+
 from tastypie.utils import trailing_slash
 from tastypie import fields
 from tastypie.resources import ModelResource
 from tastypie.serializers import Serializer
+from tastypie.authentication import BasicAuthentication, ApiKeyAuthentication, MultiAuthentication
+from tastypie.authorization import DjangoAuthorization
+from tastypie.authorization import Authorization
 
 from app.models import *
 from app.utils.send_mail import *
@@ -21,7 +27,8 @@ class OneTimePasswordResource(ModelResource):
     class Meta:
         queryset = OneTimePassword.objects.all()
         resource_name = 'otp'
-        fields = ['number', 'bin', 'expiration_date']
+        allowed_methods = ['get','post']
+        filtering = { "id" : ALL }
 
     def prepend_urls(self):
         return [
@@ -33,7 +40,7 @@ class OneTimePasswordResource(ModelResource):
 
     def otp_request(self, request, **kwargs):
         try:
-            if request.method == 'GET':
+            if request.method.lower() in ['get']:
                 username = request.GET['username']
                 if username:
                     user = User.objects.filter(username=username).first()
@@ -59,16 +66,17 @@ class OneTimePasswordResource(ModelResource):
             else:
                 res = {"result": {"status": "False", "message": "Method Not allowed"}}
         except:
-            res = {"result": {"status": "False", "message": "Something Went wrong"}}
-        return HttpResponse(simplejson.dumps(res), content_type="application/json")
+            res = {"result": {"status": "False", "message": "Finally Went wrong"}}
+        return self.create_response(request, res)
 
     def verify_otp(self, request, **kwargs):
         res = {}
         try:
-            if request.method == 'POST':
-                username = request.POST['username']
-                otp = request.POST["otp"]
-                otp_type = request.POST.get('otp_type', 'NEW')
+            if request.method.lower() in ['post']:
+                input_data = json.loads(request.body)
+                otp = input_data.get("otp", "")
+                username = input_data.get("username", "")
+                otp_type = input_data.get('otp_type', 'NEW')
                 if username:
                     user = User.objects.filter(username=username).first()
                     if user:
@@ -88,4 +96,4 @@ class OneTimePasswordResource(ModelResource):
 
         except:
             res = {"result": {"status": "False", "message": "Something Went wrong"}}
-        return HttpResponse(simplejson.dumps(res), content_type="application/json")
+        return self.create_response(request, res)
