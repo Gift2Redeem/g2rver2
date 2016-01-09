@@ -231,8 +231,8 @@ class UserResource(ModelResource):
                 res = {"result": {"status": "False", "message": "Method Not allowed"}}
         except:
             res = {"result": {"status": "False", "message": "Something went Wrong "}}
-        return self.create_response(request, res, HttpResponse
-        
+        return self.create_response(request, res, HttpResponse)
+
     def fb_login(self, request):
 
         try:
