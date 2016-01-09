@@ -214,6 +214,7 @@ class UserResource(ModelResource):
                     #user = User.objects.filter(username=username, password=password)
                     if user.is_active:
                         login(request, user)
+                        user.is_authenticated()
                         user_result = {}
                         user_result['username'] = user.username
                         user_result['first_name'] = user.first_name
@@ -230,8 +231,8 @@ class UserResource(ModelResource):
                 res = {"result": {"status": "False", "message": "Method Not allowed"}}
         except:
             res = {"result": {"status": "False", "message": "Something went Wrong "}}
-        return self.create_response(request, res)
-
+        return self.create_response(request, res, HttpResponse
+        
     def fb_login(self, request):
 
         try:
