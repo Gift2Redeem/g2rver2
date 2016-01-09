@@ -349,7 +349,6 @@ class UserResource(ModelResource):
 
 
     def get_cards(self, request, **kwargs):
-        import pdb;pdb.set_trace()
         try:
             if not request.user:
                 res = {"result": {"status": "False", "message": "User must login "}}
