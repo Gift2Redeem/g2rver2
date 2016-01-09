@@ -13,7 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from tastypie.utils import trailing_slash
 from tastypie import fields
-from tastypie.resources import ModelResource
+from tastypie.resources import ModelResource, ALL
 from tastypie.serializers import Serializer
 from tastypie.authentication import BasicAuthentication, ApiKeyAuthentication, MultiAuthentication
 from tastypie.authorization import DjangoAuthorization
