@@ -89,16 +89,17 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-MEDIA_ROOT = '/var/django/gift/assets/'
+MEDIA_ROOT = '/assets/'
 MEDIA_URL = '/assets/'
 
 ACCOUNT_ACTIVATION_DAYS = 7
 
 # CORS
-CORS_ORIGIN_ALLOW_ALL   = True
+CORS_ORIGIN_ALLOW_ALL   = False 
 CORS_ALLOW_CREDENTIALS  = True
 SESSION_COOKIE_HTTPONLY = False
-
+CORS_ORIGIN_WHITELIST=('http://localhost:8100')
+CORS_EXPOSE_HEADERS=('Set-Cookie')
 # Heroku Setup
 
 # Parse database configuration from $DATABASE_URL
@@ -109,9 +110,22 @@ SESSION_COOKIE_HTTPONLY = False
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Allow all host headers
-ALLOWED_HOSTS = ['*']
+#ALLOWED_HOSTS = ['*']
+CORS_ALLOW_HEADERS = (
+        'x-requested-with',
+        'content-type',
+        'accept',
+        'origin',
+        'authorization',
+        'x-csrftoken'
+    )
+# Heroku Setup
 
+# Parse database configuration from $DATABASE_URL
+#import dj_database_url
+#DATABASES['default'] =  dj_database_url.config()
 
+ 
 
 
 
