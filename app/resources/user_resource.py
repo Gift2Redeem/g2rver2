@@ -250,7 +250,8 @@ class UserResource(ModelResource):
                 #username = request.user.username
                 old_password = request.POST.get("old_password", "")
                 change_type = request.POST.get("change_type", "")
-                new_password = request.POST["new_password"]
+#                new_password = request.POST["new_password"]
+                new_password = request.POST.get("new_password","")
                 user_obj = ''
 
                 if old_password:
