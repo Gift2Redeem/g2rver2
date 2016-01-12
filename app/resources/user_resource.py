@@ -124,8 +124,9 @@ class UserResource(ModelResource):
                         if input_data.get("balance", ""):
                             bal = input_data.get("balance")
                         else:
-                            bal_obj = BalanceCheck()
-                            bal = bal_obj.card_balance(card_details)
+                            bal = 0
+#                            bal_obj = BalanceCheck()
+#                            bal = bal_obj.card_balance(card_details)
                         card_b = CardBalance()
                         card_b.card = add_card_obj
                         card_b.balance = bal
