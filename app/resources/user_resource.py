@@ -70,35 +70,32 @@ class UserResource(ModelResource):
             url(r"^(?P<resource_name>%s)/add_cards%s$" %
                 (self._meta.resource_name, trailing_slash()),
                 self.wrap_view('add_cards'), name="add_cards"),
-            url(r"^(?P<resource_name>%s)/offers%s$" %
-                (self._meta.resource_name, trailing_slash()),
-                self.wrap_view('offers'), name="offers"),
-            url(r"^(?P<resource_name>%s)/new_card%s$" %
-                (self._meta.resource_name, trailing_slash()),
-                self.wrap_view('new_card'), name="api_new_card"),
    
         ]
 
     
     def add_cards(self, request, **kwargs):
         try:
-            if not request.user:
-                res = {"result": {"status": "False", "message": "User Not allowed"}}
-                return HttpResponse(simplejson.dumps(res), content_type="application/json", request=request)
+            if not request.user.username:
+                res = {"result": {"status": "False", "message": "User must login "}}
+                return self.create_response(request, res)
             if request.method.lower() == 'post':
-                #import pdb;pdb.set_trace()
-                # username = request.POST['username']
-                # user_obj = User.objects.filter(username=username).first()
-                name = request.POST["name"]
-                number = request.POST["number"]
-                retailer_name = request.POST["retailer"]
+                input_data = json.loads(request.body)
+                if [str(x) for x  in input_data.keys() if x not in ['name', 'number', 'retailer', 'pin']]:
+                    res = {"result": {"status": "False", "message": "Input parameters are not correct"}}
+                    return self.create_response(request, res)
+
+                name = input_data.get("name", "")
+                number = input_data.get("number", "")
+                retailer_name = input_data.get("retailer", "")
+                pin = input_data.get("pin", "")
+                
                 #user = User.objects.filter(username=request.POST["user"]).first()
-                retailer = Retailer.objects.filter(name=request.POST["retailer"]).first()
+                retailer = Retailer.objects.filter(name=retailer_name).first()
                 #request.user = user;
-                pin = request.POST["pin"]
-                if request.POST.get("expiration_date"):
+                if input_data.get("expiration_date", ""):
                     from time import mktime, strptime
-                    exp_date = datetime.strptime(request.POST["expiration_date"], "%Y-%m-%d")
+                    exp_date = datetime.strptime(request.get("expiration_date"), "%Y-%m-%d")
                 else:
                     exp_date = ''
 
@@ -117,12 +114,15 @@ class UserResource(ModelResource):
                         add_card_obj, cre_card = Card.objects.get_or_create(
                             card_profile=cp,
                             number=number,
-                            pin=pin,
-                            expiration_date=expiration_date)
+                            pin=pin)
+                        if exp_date:
+                            add_card_obj.expiration_date = exp_date
+                            add_card_obj.save()
+
                     if add_card_obj:
                         card_details = {"number": number, "pin": pin, "type": retailer_name}
-                        if request.POST.get("balance"):
-                            bal = request.POST["balance"]
+                        if input_data.get("balance", ""):
+                            bal = input_data.get("balance")
                         else:
                             bal_obj = BalanceCheck()
                             bal = bal_obj.card_balance(card_details)
@@ -143,7 +143,7 @@ class UserResource(ModelResource):
    
         except:
             res = {"result": {"status": "False", "message": "User Not allowed"}}
-        return HttpResponse(simplejson.dumps(res), content_type="application/json")
+        return self.create_response(request, res)
 
     @csrf_exempt
     def new_user(self, request, **kwargs):
@@ -169,15 +169,15 @@ class UserResource(ModelResource):
                         user_obj.set_password(password)
                         user_obj.save()
                         if user_obj:
-                            opt_random = randint(0,999999)
-                            otp_create, otp_true = OneTimePassword.objects.get_or_create(user=user_obj, otp=opt_random)
+                            otp_random = randint(0,999999)
+                            otp_create, otp_true = OneTimePassword.objects.get_or_create(user=user_obj, otp=otp_random)
                             try:
                                 up_obj, up = UserProfile.objects.get_or_create(user=user_obj, mobile=mobile)
                                 up_obj.save()
                             except:
                                 pass
                             if user_obj.email:
-                                send_mail2(user_obj.email, "OTP", "your OTP is : "+str(opt_random))
+                                send_mail2(user_obj.email, "OTP", "your OTP is : "+str(otp_random))
                             #up_create, upp_true = UserProfile.objects.get_or_create(user=user_obj)
                         res = {"result": {"status": "True", "otp_data": otp_create.otp}}
                 else:
@@ -231,7 +231,7 @@ class UserResource(ModelResource):
                 res = {"result": {"status": "False", "message": "Method Not allowed"}}
         except:
             res = {"result": {"status": "False", "message": "Something went Wrong "}}
-        return self.create_response(request, res, HttpResponse)
+        return self.create_response(request, res)
 
     def fb_login(self, request):
 
@@ -247,11 +247,11 @@ class UserResource(ModelResource):
         try:
             if request.method.lower() == 'post':
                 username = request.user.username
+                input_data = json.loads(request.body)
                 #username = request.user.username
-                old_password = request.POST.get("old_password", "")
-                change_type = request.POST.get("change_type", "")
-#                new_password = request.POST["new_password"]
-                new_password = request.POST.get("new_password","")
+                old_password = input_data.get("old_password", "")
+                change_type = input_data.get("change_type", "")
+                new_password = input_data.get("new_password", "")
                 user_obj = ''
 
                 if old_password:
@@ -269,13 +269,14 @@ class UserResource(ModelResource):
                 res = {"result": {"status": "False", "message": "Method Not allowed"}}
         except:
             res = {"result": {"status": "False", "message": "Something went Wrong "}}
-        return HttpResponse(simplejson.dumps(res), content_type="application/json")
+        return self.create_response(request, res, HttpResponse)
 
+    @csrf_exempt
     def forgot_password(self, request, **kwargs):
         try:
             if request.method.lower() == 'post':
-                #import pdb;pdb.set_trace()
-                username = request.POST["username"]
+                input_data = json.loads(request.body)
+                username = input_data.get("username", "")
                 if '@' in username:
                     email = username
                     user = User.objects.filter(email=email)
@@ -296,11 +297,11 @@ class UserResource(ModelResource):
                 res = {"result": {"status": "False", "message": "Method Not allowed"}}
         except:
             res = {"result": {"status": "False", "message": "Something went Wrong "}}
-        return HttpResponse(simplejson.dumps(res), content_type="application/json")
+        return self.create_response(request, res)
 
     def edit_user(self, request, **kwargs):
         try:
-            if request.user:
+            if request.user.username:
                 user_pro= UserProfile.objects.filter(user=request.user)[0]
                 user_result = {} 
                 user_result['username'] = request.user.username
@@ -319,7 +320,7 @@ class UserResource(ModelResource):
 
     def update_user(self, request, **kwargs):
         try:
-            if request.user:
+            if request.user.username:
                 input_data = json.loads(request.body)
                 user_pro= UserProfile.objects.filter(user=request.user)[0]
                 if input_data.get('first_name', ''):
@@ -336,6 +337,7 @@ class UserResource(ModelResource):
                 user_result['mobile'] = user_pro.mobile
                 res = {"result": {"status": "True", "data": user_result, "message": "success"}}
             else:
+                logout(request.user)
                 res = {"result": {"status": "False", "message": "User does not exist"}}
    
         except:
@@ -352,22 +354,17 @@ class UserResource(ModelResource):
 
     def get_cards(self, request, **kwargs):
         try:
-            if not request.user:
-                res = {"result": {"status": "False", "message": "User must login "}}
+            if not request.user.username:
+                res = {"result": {"status": "False", "message": "User Not login"}}
                 return self.create_response(request, res)
             else:
-                # user = User.objects.filter(username=request.POST["username"]).first()
-
-                # request.user = user;
-
                 cards = WalletCard.objects.filter(user=request.user)
                 user_result = {}
                 user_result['username'] = request.user.username
                 user_result['first_name'] = request.user.first_name
                 user_result['last_name'] = request.user.last_name
                 card_list = []
-                if cards:
-                                
+                if cards:      
                     for wcard in cards:
                         card_values = {}
                         bal = CardBalance.objects.filter(card = wcard.card)[0]
@@ -388,74 +385,6 @@ class UserResource(ModelResource):
         except:
             res = {"result": {"status": "False", "message": "Something went Wrong "}}
         return self.create_response(request, res)
-
-    def new_card(self, request, **kwargs):
-        try:
-            #if not request.user:
-            #res = {"result": {"status": "False", "message": "User Not allowed"}}
-            #return HttpResponse(simplejson.dumps(res), content_type="application/json")
-            if request.method.lower() == 'post':
-                #import pdb;pdb.set_trace()
-                # username = request.POST['username']
-                # user_obj = User.objects.filter(username=username).first()
-                name = request.POST["name"]
-                number = request.POST["number"]
-                retailer_name = request.POST["retailer"]
-                user = User.objects.filter(username=request.POST["user"]).first()
-                retailer = Retailer.objects.filter(name=request.POST["retailer"]).first()
-                request.user = user;
-                pin = request.POST["pin"]
-                if request.POST.get("expiration_date"):
-                    from time import mktime, strptime
-                    exp_date = datetime.strptime(request.POST["expiration_date"], "%Y-%m-%d")
-                else:
-                    exp_date = ''
-
-                #expiration_date = dateutil.parser.parse(request.POST["expiration_date"])
-                expiration_date = exp_date
-                cp = CardProfile()
-                cp.retailer = retailer 
-                cp.name = name
-                cp.save()
-                if cp:
-                    add_card_obj = Card.objects.filter(
-                        card_profile=cp,
-                        number=number,
-                        pin=pin)
-                    if not add_card_obj:
-                        add_card_obj, cre_card = Card.objects.get_or_create(
-                            card_profile=cp,
-                            number=number,
-                            pin=pin,
-                            expiration_date=expiration_date)
-                    if add_card_obj:
-                        card_details = {"number": number, "pin": pin, "type": retailer_name}
-                        if request.POST.get("balance"):
-                            bal = request.POST["balance"]
-                        else:
-                            bal_obj = BalanceCheck()
-                            bal = bal_obj.card_balance(card_details)
-                        card_b = CardBalance()
-                        card_b.card = add_card_obj
-                        card_b.balance = bal
-                        card_b.save()
-
-                    if add_card_obj and request.user:
-                        wallet_card = WalletCard.objects.filter(card=add_card_obj, user=request.user)
-                        if not wallet_card:
-                            wallet_obj, wall = WalletCard.objects.get_or_create(card=add_card_obj, user=request.user)
-                            res = {"result": {"status": "True", "message": "Card Entered Success"}}
-                            return HttpResponse(simplejson.dumps(res), content_type="application/json")
-                        else:
-                            res = {"result": {"status": "True", "message": "Card Already mapped"}}
-                            return HttpResponse(simplejson.dumps(res), content_type="application/json")
-            else:
-                res = {"result": {"status": "False", "message": "User Not allowed"}}
-                return HttpResponse(simplejson.dumps(res), content_type="application/json")
-   
-        except:
-            res = {"result": {"status": "False", "message": "User Not allowed"}}
-            return HttpResponse(simplejson.dumps(res), content_type="application/json")
 
     
 

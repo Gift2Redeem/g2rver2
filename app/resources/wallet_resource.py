@@ -7,10 +7,11 @@ from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 
 from tastypie import fields
-from tastypie.authorization import DjangoAuthorization
 from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
 from tastypie.utils import trailing_slash
 from tastypie.authentication import SessionAuthentication
+from tastypie.authentication import BasicAuthentication, ApiKeyAuthentication, MultiAuthentication
+from tastypie.authorization import DjangoAuthorization
 from tastypie.authorization import Authorization
 from tastypie.http import HttpUnauthorized
 from tastypie import fields
@@ -25,6 +26,8 @@ class WalletCardResource(ModelResource):
         resource_name = 'wallet'
         queryset = WalletCard.objects.all()
         allowed_methods = ['get','post']
+        authentication = MultiAuthentication(BasicAuthentication(), ApiKeyAuthentication())
+        authorization = DjangoAuthorization()
 
     def prepend_urls(self):
         return [
@@ -36,11 +39,11 @@ class WalletCardResource(ModelResource):
     def wallet_balance_alert(self, request, **kwargs):
 
         try:
-            import pdb;pdb.set_trace()
-            if not request.user:
+            #import pdb;pdb.set_trace()
+            if not request.user.username:
                 res = {"result": {"status": "False", "message": "User Not Login"}}
-                return HttpResponse(simplejson.dumps(res), content_type="application/json")
-            if request.method.lower() == 'get':
+                return self.create_response(request, res)
+            if request.method.lower() in ['get']:
                 card_id = request.GET['card_id']
                 if card_id:
                     card_obj = Card.objects.filter(id=card_id).first()
@@ -64,10 +67,8 @@ class WalletCardResource(ModelResource):
                             res = {"result": {"status": "False", "message": "Wallet Card Not match"}}
                     else:
                         res = {"result": {"status": "False", "message": "Card Does not Exist "}}
-                #res = {"result": {"status": "True", "message": "User Test "}}
-                return HttpResponse(simplejson.dumps(res), content_type="application/json")
    
         except:
             res = {"result": {"status": "False", "message": "User Not allowed"}}
-            return HttpResponse(simplejson.dumps(res), content_type="application/json")
+        return self.create_response(request, res)
 
