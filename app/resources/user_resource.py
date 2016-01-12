@@ -125,8 +125,8 @@ class UserResource(ModelResource):
                             bal = input_data.get("balance")
                         else:
                             bal = 0
-#                            bal_obj = BalanceCheck()
-#                            bal = bal_obj.card_balance(card_details)
+                            #bal_obj = BalanceCheck()
+                            #bal = bal_obj.card_balance(card_details)
                         card_b = CardBalance()
                         card_b.card = add_card_obj
                         card_b.balance = bal
@@ -143,7 +143,7 @@ class UserResource(ModelResource):
                 res = {"result": {"status": "False", "message": "User Not allowed"}}
    
         except:
-            res = {"result": {"status": "False", "message": "User Not allowed"}}
+            res = {"result": {"status": "False", "message": "User auth Not allowed"}}
         return self.create_response(request, res)
 
     @csrf_exempt
@@ -225,7 +225,11 @@ class UserResource(ModelResource):
                             user_result['user_image'] = str(user_pro.user_image.url)
                         res = {"result": {"status": "True", "user": user_result, "message": "Login success"}}
                     else:
-                        res = {"result": {"status": "False", "message": "Login Fail"}}
+                        otp_random = randint(0,999999)
+                        otp_create, otp_true = OneTimePassword.objects.get_or_create(user=user, otp=otp_random)
+                        if user.email:
+                            send_mail2(user.email, "OTP", "your OTP is : "+str(otp_random))
+                        res = {"result": {"status": "False", "message": "Your account is not verified yet", "otp": otp_create.otp}}
                 else:
                     res = {"result": {"status": "False", "message": "Username / password is not available"}}
             else:
