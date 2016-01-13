@@ -101,6 +101,13 @@ class UserResource(ModelResource):
                     exp_date = datetime.strptime(request.get("expiration_date"), "%Y-%m-%d")
                 else:
                     exp_date = ''
+                wallet_objs = WalletCard.objects.filter(user=request.user)
+                if wallet_objs:
+                    for obj in wallet_objs:
+                        if obj.card.number==number and obj.card.card_profile.retailer.name==retailer_name:
+                            print number
+                            res = {"result": {"status": "False", "message": "Card Already exist"}}
+                            return self.create_response(request, res)
 
                 #expiration_date = dateutil.parser.parse(request.POST["expiration_date"])
                 expiration_date = exp_date
