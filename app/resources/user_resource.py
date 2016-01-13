@@ -70,6 +70,9 @@ class UserResource(ModelResource):
             url(r"^(?P<resource_name>%s)/add_cards%s$" %
                 (self._meta.resource_name, trailing_slash()),
                 self.wrap_view('add_cards'), name="add_cards"),
+            url(r"^(?P<resource_name>%s)/balance%s$" %
+                (self._meta.resource_name, trailing_slash()),
+                self.wrap_view('balance'), name="add_cards"),
    
         ]
 
@@ -140,10 +143,10 @@ class UserResource(ModelResource):
                         else:
                             res = {"result": {"status": "True", "message": "Card Already mapped"}}
             else:
-                res = {"result": {"status": "False", "message": "User Not allowed"}}
+                res = {"result": {"status": "False", "message": "Method Not allowed"}}
    
         except:
-            res = {"result": {"status": "False", "message": "User auth Not allowed"}}
+            res = {"result": {"status": "False", "message": "User Not allowed"}}
         return self.create_response(request, res)
 
     @csrf_exempt
@@ -373,6 +376,7 @@ class UserResource(ModelResource):
                     for wcard in cards:
                         card_values = {}
                         bal = CardBalance.objects.filter(card = wcard.card)[0]
+                        card_values['card_id'] = wcard.card.id
                         card_values['number'] = wcard.card.number
                         card_values['pin'] = wcard.card.pin
                         card_values['profile_name'] = wcard.card.card_profile.name
@@ -387,6 +391,30 @@ class UserResource(ModelResource):
                     res = {"result": {"status": "True", "data": user_result, "message": "success"}}
                 else:
                     res = {"result": {"status": "True", "data": user_result, "message": "No Cards available"}}
+        except:
+            res = {"result": {"status": "False", "message": "Something went Wrong "}}
+        return self.create_response(request, res)
+
+    def balance(self, request, **kwargs):
+        try:
+            if not request.user.username:
+                res = {"result": {"status": "False", "message": "User Not login"}}
+                return self.create_response(request, res)
+            if request.method.lower() == 'post':
+                input_data = json.loads(request.body)
+                card_id = input_data.get("card_id", "")
+                balance = input_data.get("balance", "")
+                bal_obj = ""
+                if card_id and card_id.isdigit():
+                    bal_obj = CardBalance.objects.filter(card_id=int(card_id))
+                if bal_obj and WalletCard.objects.filter(user=request.user, card_id=int(card_id)):
+                    bal_obj[0].balance = balance
+                    bal_obj[0].save()
+                    res = {"result": {"status": "True", "message": "Balance updated Success"}}
+                else:
+                    res = {"result": {"status": "False", "message": "Card Does not exist"}}
+            else:
+                    res = {"result": {"status": "False",  "message": "Method not allowed"}}
         except:
             res = {"result": {"status": "False", "message": "Something went Wrong "}}
         return self.create_response(request, res)
