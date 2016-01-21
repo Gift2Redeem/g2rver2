@@ -51,6 +51,9 @@ class UserResource(ModelResource):
             url(r"^(?P<resource_name>%s)/change_password%s$" %
                 (self._meta.resource_name, trailing_slash()),
                 self.wrap_view('change_password'), name="api_change_password"),
+            url(r"^(?P<resource_name>%s)/update_password%s$" %
+                (self._meta.resource_name, trailing_slash()),
+                self.wrap_view('update_password'), name="api_update_password"),
             url(r"^(?P<resource_name>%s)/forgot_password%s$" %
                 (self._meta.resource_name, trailing_slash()),
                 self.wrap_view('forgot_password'), name="api_forgot_password"),
@@ -221,25 +224,28 @@ class UserResource(ModelResource):
 
                 if username and password:
                     user = authenticate(username=username, password=password)
+                    if user:
 
-                    #user = User.objects.filter(username=username, password=password)
-                    if user.is_active:
-                        login(request, user)
-                        user.is_authenticated()
-                        user_result = {}
-                        user_result['username'] = user.username
-                        user_result['first_name'] = user.first_name
-                        user_result['last_name'] = user.last_name
-                        user_pro= UserProfile.objects.filter(user=user)[0]
-                        if user_pro.user_image:
-                            user_result['user_image'] = str(user_pro.user_image.url)
-                        res = {"result": {"status": "True", "user": user_result, "message": "Login success"}}
+                        #user = User.objects.filter(username=username, password=password)
+                        if user.is_active:
+                            login(request, user)
+                            user.is_authenticated()
+                            user_result = {}
+                            user_result['username'] = user.username
+                            user_result['first_name'] = user.first_name
+                            user_result['last_name'] = user.last_name
+                            user_pro= UserProfile.objects.filter(user=user)[0]
+                            if user_pro.user_image:
+                                user_result['user_image'] = str(user_pro.user_image.url)
+                            res = {"result": {"status": "True", "user": user_result, "message": "Login success"}}
+                        else:
+                            otp_random = randint(0,999999)
+                            otp_create, otp_true = OneTimePassword.objects.get_or_create(user=user, otp=otp_random)
+                            if user.email:
+                                send_mail2(user.email, "OTP", "your OTP is : "+str(otp_random))
+                            res = {"result": {"status": "False", "message": "Your account is not verified yet", "otp": otp_create.otp}}
                     else:
-                        otp_random = randint(0,999999)
-                        otp_create, otp_true = OneTimePassword.objects.get_or_create(user=user, otp=otp_random)
-                        if user.email:
-                            send_mail2(user.email, "OTP", "your OTP is : "+str(otp_random))
-                        res = {"result": {"status": "False", "message": "Your account is not verified yet", "otp": otp_create.otp}}
+                        res = {"result": {"status": "False", "message": "Username or password is not correct"}}
                 else:
                     res = {"result": {"status": "False", "message": "Username / password is not available"}}
             else:
@@ -268,16 +274,41 @@ class UserResource(ModelResource):
                 change_type = input_data.get("change_type", "")
                 new_password = input_data.get("new_password", "")
                 user_obj = ''
-
+                if not old_password or not new_password:
+                    res = {"result": {"status": "False", "message": "New or Old Password is empty "}}
+                    return self.create_response(request, res, HttpResponse)
                 if old_password:
                     user_obj = authenticate(username=username, password=old_password)
-                elif change_type == 'FORGOT':
-                    user_obj = User.objects.get(username=username)
                 if user_obj and new_password:
                     user_obj.set_password(new_password)
                     user_obj.save()
+                    login(request, user_obj)
+                    user_obj.is_authenticated()
 
                     res = {"result": {"status": "True", "message": "Password Changed successfully"}}
+                else:
+                    res = {"result": {"status": "False", "message": "User Does not exist"}}
+            else:
+                res = {"result": {"status": "False", "message": "Method Not allowed"}}
+        except:
+            res = {"result": {"status": "False", "message": "Something went Wrong "}}
+        return self.create_response(request, res, HttpResponse)
+
+    @csrf_exempt
+    def update_password(self, request, **kwargs):
+        try:
+            if request.method.lower() == 'post':
+                input_data = json.loads(request.body)
+                change_type = input_data.get("change_type", "")
+                new_password = input_data.get("new_password", "")
+                user_obj = ''
+                username = input_data.get("username", "")
+                if username and change_type == 'FORGOT':
+                    user_obj = User.objects.get(username=username)
+                    if user_obj and new_password:
+                        user_obj.set_password(new_password)
+                        user_obj.save()
+                        res = {"result": {"status": "True", "message": "Password Updated successfully"}}
                 else:
                     res = {"result": {"status": "False", "message": "User Does not exist"}}
             else:
@@ -301,9 +332,11 @@ class UserResource(ModelResource):
                 if username:
                     user_obj = User.objects.get(username=username)
                     if user_obj:
-                        opt_random = randint(0,999999)
+                        otp_random = randint(0,999999)
                         otp_create, otp_true = OneTimePassword.objects.get_or_create(
-                            user=user_obj, otp=opt_random, otp_types = 'FORGOT')
+                            user=user_obj, otp=otp_random, otp_types = 'FORGOT')
+                        if user_obj.email:
+                            send_mail2(user_obj.email, "OTP", "Password Reset OTP is : "+str(otp_random))
                         #up_create, upp_true = UserProfile.objects.get_or_create(user=user_obj)
                         res = {"result": {"status": "True", "otp_data": otp_create.otp}}
                     else:
