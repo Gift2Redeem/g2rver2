@@ -234,8 +234,9 @@ class UserResource(ModelResource):
                             user_result['username'] = user.username
                             user_result['first_name'] = user.first_name
                             user_result['last_name'] = user.last_name
-                            user_pro= UserProfile.objects.filter(user=user)[0]
-                            if user_pro.user_image:
+                            user_pro= UserProfile.objects.filter(user=user)
+                            if user_pro:
+                                user_pro = user_pro[0]
                                 user_result['user_image'] = str(user_pro.user_image.url)
                             res = {"result": {"status": "True", "user": user_result, "message": "Login success"}}
                         else:
