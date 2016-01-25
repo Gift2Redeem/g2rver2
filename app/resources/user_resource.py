@@ -194,10 +194,10 @@ class UserResource(ModelResource):
                                 send_mail2(user_obj.email, "OTP", "your OTP is : "+str(otp_random))
                             if mobile:
                                 send_sms=send_sms_msg91(mobile, "your OTP is : "+str(otp_random.otp))
-                            if send_sms:
-                                res = {"result": {"status": "True", "otp_data": otp_create.otp}}
-                            else:
-                                res = {"result": {"status": "True", "message": "SMS Not send", "otp_data": otp_create.otp}}
+                                if send_sms:
+                                    res = {"result": {"status": "True", "otp_data": otp_create.otp}}
+                                else:
+                                    res = {"result": {"status": "True", "message": "SMS Not send", "otp_data": otp_create.otp}}
                 else:
                     res = {"result": {"status": "False", "message": "Username data is empty"}}
 
@@ -207,7 +207,7 @@ class UserResource(ModelResource):
             res = {"result": {"status": "False", "message": "Something went Wrong "}}
         return self.create_response(request, res)
 
-    #@csrf_exempt
+    @csrf_exempt
     def user_login(self, request, **kwargs):
         try:
             if request.method.lower() == 'post':
