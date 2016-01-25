@@ -25,7 +25,7 @@ from tastypie.authorization import Authorization
 from tastypie.http import HttpUnauthorized
 
 from app.utils.balance_check import *
-from app.utils.send_mail import send_mail2
+from app.utils.send_mail import *
 #from app.forms import *
 from app.models import * 
 
