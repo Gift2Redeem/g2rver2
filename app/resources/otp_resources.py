@@ -48,7 +48,7 @@ class OneTimePasswordResource(ModelResource):
                         otp_type = request.GET.get('otp_type', 'NEW')
                         otp_verify = OneTimePassword.objects.filter(user=user, is_active=True, otp_types = otp_type).first()
                         if not otp_verify:
-                            opt_random = randint(0,999999)
+                            opt_random = randint(1, 999999)
                             otp_verify, otp_true = OneTimePassword.objects.get_or_create(user=user, otp=opt_random, otp_types = otp_type)
                         if otp_verify:
                             user_p = UserProfile.objects.filter(user=user)
@@ -56,9 +56,9 @@ class OneTimePasswordResource(ModelResource):
                                 send_mail2(user.email, "OTP", "your OTP is : "+str(otp_verify.otp))
                             if user_p:
                                 if user_p[0].mobile:
-                                    mob = [user_p[0].mobile]
-                                    send_sms(mob, "your OTP is : "+str(otp_verify.otp))
-                            res = {"result": {"status": "True", "opt_data": otp_verify.otp}}
+                                    mob = user_p[0].mobile
+                                    send_sms_msg91(mob, "your OTP is : "+str(otp_verify.otp))
+                            res = {"result": {"status": "True", "otp_data": otp_verify.otp}}
                     else:
                         res = {"result": {"status": "False", "message": "User Does not exist "}}
                 else:
@@ -78,6 +78,7 @@ class OneTimePasswordResource(ModelResource):
                 username = input_data.get("username", "")
                 otp_type = input_data.get('otp_type', 'NEW')
                 if username:
+
                     user = User.objects.filter(username=username).first()
                     if user:
                         otp_verify = OneTimePassword.objects.filter(user=user, otp=otp,
@@ -91,6 +92,8 @@ class OneTimePasswordResource(ModelResource):
                             res = {"result": {"status": "True", "message": "Verify otp success"}}
                         else:
                             res = {"result": {"status": "False", "message": "Otp verification Failed"}}
+                    else:
+                        res = {"result": {"status": "False", "message": "user does not exist"}}
             else:
                 res = {"result": {"status": "False", "message": "Method Not allowed"}}
 

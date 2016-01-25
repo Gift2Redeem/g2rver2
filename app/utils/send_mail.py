@@ -3,7 +3,6 @@ from django.conf import settings
 
 
 def send_email(to, subject, text):
-	import pdb;pdb.set_trace()
 	FROM = "sender@example.com"
 
 	# Prepare actual message
@@ -23,7 +22,7 @@ def send_email(to, subject, text):
 	server.quit()
 
 
-def send_sms(mob, message):
+def send_zensend(mob, message):
     """
 Function for sms sending
 Params @mob = list of mobile numbers ex : ["919999912345","447777712345","18888812345"]
@@ -37,6 +36,46 @@ Params @mob = list of mobile numbers ex : ["919999912345","447777712345","188888
     except:
         print "No sms sending"
         return False
+
+def send_sms_msg91(mob, message):
+	try:
+
+		import urllib # Python URL functions
+		import urllib2 # Python URL functions
+
+		authkey = "102986AgpB0V2tLD56a5bd22" # Your authentication key.
+
+		mobiles = mob # Multiple mobiles numbers separated by comma.
+
+		message = message # Your message to send.
+
+		sender = "NUTECH" # Sender ID,While using route4 sender id should be 6 characters long.
+
+		route =  4 # Define route
+
+		# Prepare you post parameters
+		values = {
+		          'authkey' : authkey,
+		          'mobiles' : mobiles,
+		          'message' : message,
+		          'sender' : sender,
+		          'route' : route,
+		          'country' : 0
+		          }
+
+
+		url = "http://api.msg91.com/api/sendhttp.php" # API URL
+
+		postdata = urllib.urlencode(values) # URL encoding the data here.
+
+		req = urllib2.Request(url, postdata)
+
+		response = urllib2.urlopen(req)
+
+		output = response.read() # Get Response
+		return True
+	except:
+		return False
 
 def send_mail2(toaddr, subject, body):
 	from email.MIMEMultipart import MIMEMultipart
@@ -56,3 +95,19 @@ def send_mail2(toaddr, subject, body):
 	text = msg.as_string()
 	server.sendmail(fromaddr, toaddr, text)
 	server.quit()
+
+def twilo_sms():
+	from twilio.rest import TwilioRestClient 
+ 
+	# put your own credentials here 
+	ACCOUNT_SID = "AC5ef872f6da5a21de157d80997a64bd33" 
+	AUTH_TOKEN = "[AuthToken]" 
+	 
+	client = TwilioRestClient(ACCOUNT_SID, AUTH_TOKEN) 
+	 
+	client.messages.create(
+	    to="+16518675309", 
+	    from_="+14158141829", 
+	    body="Hey Jenny! Good luck on the bar exam!", 
+	    media_url="http://farm2.static.flickr.com/1075/1404618563_3ed9a44a3a.jpg", 
+	)

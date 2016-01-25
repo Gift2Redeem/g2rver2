@@ -192,8 +192,12 @@ class UserResource(ModelResource):
                                 pass
                             if user_obj.email:
                                 send_mail2(user_obj.email, "OTP", "your OTP is : "+str(otp_random))
-                            #up_create, upp_true = UserProfile.objects.get_or_create(user=user_obj)
-                        res = {"result": {"status": "True", "otp_data": otp_create.otp}}
+                            if mobile:
+                                send_sms=send_sms_msg91(mobile, "your OTP is : "+str(otp_random.otp))
+                            if send_sms:
+                                res = {"result": {"status": "True", "otp_data": otp_create.otp}}
+                            else:
+                                res = {"result": {"status": "True", "message": "SMS Not send", "otp_data": otp_create.otp}}
                 else:
                     res = {"result": {"status": "False", "message": "Username data is empty"}}
 
