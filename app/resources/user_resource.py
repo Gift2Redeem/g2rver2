@@ -192,6 +192,7 @@ class UserResource(ModelResource):
                                 pass
                             if user_obj.email:
                                 send_mail2(user_obj.email, "OTP", "your OTP is : "+str(otp_random))
+                                res = {"result": {"status": "True", "otp_data":otp_random}}
                             if mobile:
                                 send_sms=send_sms_msg91(mobile, "your OTP is : "+str(otp_random))
                                 if send_sms:
