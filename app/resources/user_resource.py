@@ -28,7 +28,7 @@ from app.utils.balance_check import *
 from app.utils.send_mail import *
 #from app.forms import *
 from app.models import * 
-# testing
+
 
 class UserResource(ModelResource):
         
@@ -161,6 +161,7 @@ class UserResource(ModelResource):
 
     @csrf_exempt
     def new_user(self, request, **kwargs):
+        res = {}
         try:
             if request.method.lower() in ['post']:
                 input_data = json.loads(request.body)
@@ -190,13 +191,13 @@ class UserResource(ModelResource):
                                 up_obj.save()
                             except:
                                 pass
-                            if user_obj.email:
-                                send_mail2(user_obj.email, "OTP", "your OTP is : "+str(otp_random))
-                                res = {"result": {"status": "True", "otp_data":otp_random}}
+                            if email:
+                                send_mail2(email, "OTP", "your OTP is : "+str(otp_random))
+                                res = {"result": {"status": "True", "otp_data": otp_random}}
                             if mobile:
                                 send_sms=send_sms_msg91(mobile, "your OTP is : "+str(otp_random))
                                 if send_sms:
-                                    res = {"result": {"status": "True", "otp_data":otp_random}}
+                                    res = {"result": {"status": "True", "otp_data": otp_random}}
                                 else:
                                     res = {"result": {"status": "True", "message": "SMS Not send", "otp_data": otp_create.otp}}
                 else:
@@ -217,7 +218,7 @@ class UserResource(ModelResource):
                 input_data = json.loads(request.body)
                 username = input_data.get('username', "")
                 password = input_data.get("password", "")
-                user_check = User.objects.filter(username=username)
+                user_check = User.objects.filter(email=username)
                 if user_check:
                     username = user_check[0].username
                 else:
@@ -371,24 +372,60 @@ class UserResource(ModelResource):
             res = {"result": {"status": "False", "message": "User Not allowed"}}
         return self.create_response(request, res)
 
+    def check_mail_exist(self, user, new_email):
+        if user.email==new_email:
+            return True
+        else:
+            email_exist = User.objects.filter(email=new_email)
+            if email_exist:
+                return False
+            else:
+                user.email=new_email
+                user.save()
+                return True
+
+    def check_mobile_exist(self, user_pro, mobile):
+        if user_pro.mobile==mobile:
+            return True
+        else:
+            mobile_exist = UserProfile.objects.filter(mobile=mobile)
+            if mobile_exist:
+                return False
+            else:
+                user_pro.mobile=mobile
+                user_pro.save()
+                return True
 
     def update_user(self, request, **kwargs):
         try:
             if request.user.username:
+                user_result = {} 
                 input_data = json.loads(request.body)
                 user_pro= UserProfile.objects.filter(user=request.user)[0]
                 if input_data.get('first_name', ''):
                     request.user.first_name = input_data['first_name']
                 if input_data.get('last_name', ''):
                     request.user.last_name = input_data['last_name']
-                request.user.save() 
+                 
                 #user_pro.save()
-                user_result = {} 
+                
                 user_result['username'] = request.user.username
                 user_result['first_name'] = request.user.first_name
                 user_result['last_name'] = request.user.last_name
-                user_result['email'] = request.user.email
-                user_result['mobile'] = user_pro.mobile
+                
+                if input_data.get('email', ''):
+                    if self.check_mail_exist(request.user, input_data['email']):
+                        user_result['email'] = input_data['email']
+                    else:
+                        res = {"result": {"status": "False", "data": user_result, "message": "Email already exist"}}
+                        return self.create_response(request, res)
+                if input_data.get('mobile', ''):
+                    if self.check_mobile_exist(user_pro, input_data['mobile']):
+                        user_result['mobile'] = input_data['mobile']
+                    else:
+                        res = {"result": {"status": "False", "data": user_result, "message": "mobile number already exist"}}
+                        return self.create_response(request, res)
+                request.user.save()
                 res = {"result": {"status": "True", "data": user_result, "message": "success"}}
             else:
                 logout(request.user)
