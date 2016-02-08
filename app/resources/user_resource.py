@@ -195,7 +195,11 @@ class UserResource(ModelResource):
                                 send_mail2(email, "OTP", "your OTP is : "+str(otp_random))
                                 res = {"result": {"status": "True", "otp_data": otp_random}}
                             if mobile:
-                                send_sms=send_sms_msg91(mobile, "your OTP is : "+str(otp_random))
+                                if mobile[0]=='1' and len(mobile)==11:
+                                    country=1
+                                else
+                                    country=0
+                                send_sms=send_sms_msg91(mobile, "your OTP is : "+str(otp_random), country)
                                 if send_sms:
                                     res = {"result": {"status": "True", "otp_data": otp_random}}
                                 else:
@@ -219,12 +223,14 @@ class UserResource(ModelResource):
                 username = input_data.get('username', "")
                 password = input_data.get("password", "")
                 user_check = User.objects.filter(email=username)
+                mobile = ''
                 if user_check:
                     username = user_check[0].username
                 else:
                     up_obj = UserProfile.objects.filter(mobile=username)
                     if up_obj:
                         username = up_obj[0].user.username
+                        mobile=username
                     else:
                         username = ''
 
@@ -247,10 +253,24 @@ class UserResource(ModelResource):
                             res = {"result": {"status": "True", "user": user_result, "message": "Login success"}}
                         else:
                             otp_random = randint(0,999999)
-                            otp_create, otp_true = OneTimePassword.objects.get_or_create(user=user, otp=otp_random)
+                            otp_create = OneTimePassword.objects.filter(user=user
+                            is_active=True, otp_types = 'NEW').first()
+                            if not otp_create:
+                                otp_create, otp_true = OneTimePassword.objects.get_or_create(user=user, otp=otp_random)
                             if user.email:
-                                send_mail2(user.email, "OTP", "your OTP is : "+str(otp_random))
-                            res = {"result": {"status": "False", "message": "Your account is not verified yet", "otp": otp_create.otp}}
+                                send_mail2(user.email, "OTP", "your OTP is : "+str(otp_create.otp))
+                                res = {"result": {"status": "False", "message": "Your account is not verified yet", "otp": otp_create.otp}}
+                            if mobile:
+                                if mobile[0]=='1' and len(mobile)==11:
+                                    country=1
+                                else
+                                    country=0
+                                send_sms=send_sms_msg91(mobile, "your OTP is : "+str(otp_create.otp), country)
+                                 if send_sms:
+                                    res = {"result": {"status": "False", "otp_data": otp_create.otp}}
+                                else:
+                                    res = {"result": {"status": "False", "message": "SMS Not send", "otp_data": otp_create.otp}}
+                
                     else:
                         res = {"result": {"status": "False", "message": "Username or password is not correct"}}
                 else:

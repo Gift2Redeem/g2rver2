@@ -37,7 +37,7 @@ Params @mob = list of mobile numbers ex : ["919999912345","447777712345","188888
         print "No sms sending"
         return False
 
-def send_sms_msg91(mob, message):
+def send_sms_msg91(mob, message, country=0):
 	try:
 
 		import urllib # Python URL functions
@@ -48,8 +48,10 @@ def send_sms_msg91(mob, message):
 		mobiles = mob # Multiple mobiles numbers separated by comma.
 
 		message = message # Your message to send.
-
-		sender = "NUTECH" # Sender ID,While using route4 sender id should be 6 characters long.
+		if country == 1:
+			sender = mob
+		else:
+			sender = "NUTECH" # Sender ID,While using route4 sender id should be 6 characters long.
 
 		route =  4 # Define route
 
@@ -60,7 +62,7 @@ def send_sms_msg91(mob, message):
 		          'message' : message,
 		          'sender' : sender,
 		          'route' : route,
-		          'country' : 0
+		          'country' : country
 		          }
 
 
