@@ -197,7 +197,7 @@ class UserResource(ModelResource):
                             if mobile:
                                 if mobile[0]=='1' and len(mobile)==11:
                                     country=1
-                                else
+                                else:
                                     country=0
                                 send_sms=send_sms_msg91(mobile, "your OTP is : "+str(otp_random), country)
                                 if send_sms:
