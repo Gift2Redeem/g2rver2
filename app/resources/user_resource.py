@@ -266,7 +266,7 @@ class UserResource(ModelResource):
                                 else
                                     country=0
                                 send_sms=send_sms_msg91(mobile, "your OTP is : "+str(otp_create.otp), country)
-                                 if send_sms:
+                                if send_sms:
                                     res = {"result": {"status": "False", "otp_data": otp_create.otp}}
                                 else:
                                     res = {"result": {"status": "False", "message": "SMS Not send", "otp_data": otp_create.otp}}
