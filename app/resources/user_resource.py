@@ -253,8 +253,7 @@ class UserResource(ModelResource):
                             res = {"result": {"status": "True", "user": user_result, "message": "Login success"}}
                         else:
                             otp_random = randint(0,999999)
-                            otp_create = OneTimePassword.objects.filter(user=user
-                            is_active=True, otp_types = 'NEW').first()
+                            otp_create = OneTimePassword.objects.filter(user=user, is_active=True, otp_types = 'NEW').first()
                             if not otp_create:
                                 otp_create, otp_true = OneTimePassword.objects.get_or_create(user=user, otp=otp_random)
                             if user.email:
