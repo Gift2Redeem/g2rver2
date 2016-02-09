@@ -352,26 +352,18 @@ class UserResource(ModelResource):
                 if '@' in username:
                     email = username
                     user = User.objects.filter(email=email)
-
+                #         raise CustomBadRequest(
+                #             code="duplicate_exception",
+                #             message="That email is already used.")
                 if username:
                     user_obj = User.objects.get(username=username)
                     if user_obj:
-                        otp_random = randint(1, 999999)
+                        otp_random = randint(0,999999)
                         otp_create, otp_true = OneTimePassword.objects.get_or_create(
                             user=user_obj, otp=otp_random, otp_types = 'FORGOT')
                         if user_obj.email:
                             send_mail2(user_obj.email, "OTP", "Password Reset OTP is : "+str(otp_random))
                         #up_create, upp_true = UserProfile.objects.get_or_create(user=user_obj)
-                        user_p = UserProfile.objects.filter(user=user_obj)
-
-                        if user_p:
-                            if user_p[0].mobile:
-                                mobile = user_p[0].mobile
-                                if mobile[0]=='1' and len(mobile)==11:
-                                    country=1
-                                else:
-                                    country=0
-                                send_sms=send_sms_msg91(mobile, "your OTP is : "+str(otp_random), country)
                         res = {"result": {"status": "True", "otp_data": otp_create.otp}}
                     else:
                         res = {"result": {"status": "False", "message": "User Does not exist"}}

@@ -48,20 +48,16 @@ class OneTimePasswordResource(ModelResource):
                         otp_type = request.GET.get('otp_type', 'NEW')
                         otp_verify = OneTimePassword.objects.filter(user=user, is_active=True, otp_types = otp_type).first()
                         if not otp_verify:
-                            otp_random = randint(1, 999999)
-                            otp_verify, otp_true = OneTimePassword.objects.get_or_create(user=user, otp=otp_random, otp_types = otp_type)
+                            opt_random = randint(1, 999999)
+                            otp_verify, otp_true = OneTimePassword.objects.get_or_create(user=user, otp=opt_random, otp_types = otp_type)
                         if otp_verify:
                             user_p = UserProfile.objects.filter(user=user)
                             if user.email:
                                 send_mail2(user.email, "OTP", "your OTP is : "+str(otp_verify.otp))
                             if user_p:
                                 if user_p[0].mobile:
-                                    mobile = user_p[0].mobile
-                                    if mobile[0]=='1' and len(mobile)==11:
-                                        country=1
-                                    else:
-                                        country=0
-                                    send_sms=send_sms_msg91(mobile, "your OTP is : "+str(otp_random), country)
+                                    mob = user_p[0].mobile
+                                    send_sms_msg91(mob, "your OTP is : "+str(otp_verify.otp))
                             res = {"result": {"status": "True", "otp_data": otp_verify.otp}}
                     else:
                         res = {"result": {"status": "False", "message": "User Does not exist "}}
