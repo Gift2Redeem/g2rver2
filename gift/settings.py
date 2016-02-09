@@ -13,7 +13,7 @@ import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-
+PROJECT_DIR = os.path.dirname(__file__)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
@@ -93,6 +93,7 @@ STATIC_URL = '/static/'
 
 MEDIA_ROOT = '/assets/'
 MEDIA_URL = '/assets/'
+STATIC_ROOT = os.path.join(PROJECT_DIR, 'static')
 
 ACCOUNT_ACTIVATION_DAYS = 7
 
