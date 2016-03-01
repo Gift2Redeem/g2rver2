@@ -477,10 +477,13 @@ class UserResource(ModelResource):
                 return self.create_response(request, res)
             else:
                 cards = WalletCard.objects.filter(user=request.user)
+                user_pro= UserProfile.objects.filter(user=request.user)[0]
                 user_result = {}
                 user_result['username'] = request.user.username
                 user_result['first_name'] = request.user.first_name
                 user_result['last_name'] = request.user.last_name
+                user_result['email'] = request.user.email
+                user_result['mobile'] = user_pro.mobile
                 card_list = []
                 if cards:      
                     for wcard in cards:
