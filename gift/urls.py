@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
-
+from django.conf import settings
 from tastypie.api import Api
 from app.resources import *
 from app.views import *
@@ -19,3 +19,8 @@ urlpatterns = patterns('',
     (r'^api/v1/login', validate_user),
     url(r'^admin/', include(admin.site.urls)),
 )
+urlpatterns += patterns('',
+    url(r'^static/(?P<path>.*)$', 'django.views.static.serve', {
+        'document_root': settings.STATIC_ROOT,
+    }),
+ )
